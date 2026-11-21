@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Poetic Prompt Studio - 나만의 시와 노래 만들기</title>
+    <!-- Tailwind CSS 로드 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts (Pretendard / Noto Sans KR) -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome 아이콘 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            user-select: none; /* 텍스트 드래그 방지 */
+            -webkit-user-select: none;
+        }
+        /* 입력창 내부에서는 타이핑과 커서 이동을 허용하되 복붙은 JS로 차단 */
+        input, textarea {
+            user-select: text;
+            -webkit-user-select: text;
+        }
+        .fade-in {
+            animation: fadeIn 0.4s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        /* 커스텀 스크롤바 */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+
+    <!-- 커스텀 알림 모달 (alert() 대체) -->
+    <div id="customModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl transform transition-all">
+            <div class="flex items-center gap-3 mb-4">
+                <div id="modalIcon" class="w-10 h-10 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-xl">
+                    <i class="fa-solid fa-bell"></i>
+                </div>
+                <h3 id="modalTitle" class="text-lg font-bold text-slate-800">알림</h3>
+            </div>
+            <p id="modalMessage" class="text-slate-600 mb-6 leading-relaxed text-sm"></p>
+            <div class="flex justify-end">
+                <button onclick="closeModal()" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-xl transition-colors">
+                    확인
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 1. 로그인 / 접속 화면 -->
+    <div id="loginScreen" class="flex-grow flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl shadow-xl border border-slate-100 max-w-md w-full p-8 fade-in">
+            <div class="text-center mb-8">
+                <div class="w-16 h-16 bg-gradient-to-tr from-indigo-600 to-purple-500 text-white rounded-2xl flex items-center justify-center text-3xl mx-auto mb-4 shadow-lg">
+                    <i class="fa-solid fa-music"></i>
+                </div>
+                <span class="inline-block text-xs font-bold text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full mb-2">국어 · 성찰하며 성장하며</span>
+                <h1 class="text-2xl font-bold text-slate-800">시(詩), 노래가 되다</h1>
+                <p class="text-sm text-slate-500 mt-2">시에 정해진 정답은 없어요! 나만의 해석과 느낌으로 노래를 만들어요</p>
+            </div>
+
+            <form id="loginForm" class="space-y-5">
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-1.5">학생 닉네임 (학번/이름 등)</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400">
+                            <i class="fa-solid fa-user"></i>
+                        </span>
+                        <input type="text" id="nicknameInput" required placeholder="예: 2학년3반_김민수" 
+                            class="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-1.5">나만의 작업실 비밀번호</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400">
+                            <i class="fa-solid fa-lock"></i>
+                        </span>
+                        <input type="password" id="passwordInput" required placeholder="4자리 이상 입력 (재접속 시 동일 입력)" 
+                            class="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all">
+                    </div>
+                    <p class="text-xs text-slate-400 mt-1.5">* 처음 입력하는 닉네임은 새 작업실이 생성되며, 기존 닉네임은 설정한 비밀번호로 이어서 작업할 수 있습니다.</p>
+                </div>
+
+                <button type="submit" class="w-full py-3.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold rounded-xl shadow-md hover:shadow-lg transition-all transform active:scale-[0.98]">
+                    작업실 입장하기 <i class="fa-solid fa-arrow-right ml-1"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- 2. 메인 애플리케이션 화면 (로그인 후 표시) -->
+    <div id="mainApp" class="hidden flex-col min-h-screen">
+        <!-- 상단 헤더 -->
+        <header class="bg-white border-b border-slate-200 sticky top-0 z-30">
+            <div class="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 bg-indigo-600 text-white rounded-xl flex items-center justify-center font-bold">
+                        <i class="fa-solid fa-feather-pointed"></i>
+                    </div>
+                    <span class="font-bold text-lg text-slate-800 hidden sm:inline">시(詩), 노래가 되다</span>
+                </div>
+
+                <!-- 탭 네비게이션 -->
+                <nav class="flex space-x-1 sm:space-x-2 bg-slate-100 p-1 rounded-xl">
+                    <button onclick="switchTab('tab1')" id="btnTab1" class="px-3 sm:px-5 py-2 rounded-lg text-sm font-bold transition-all bg-white text-indigo-600 shadow-sm">
+                        <i class="fa-solid fa-pen-nib mr-1.5"></i>1. 시의 느낌 & 프롬프트 설계
+                    </button>
+                    <button onclick="switchTab('tab2')" id="btnTab2" class="px-3 sm:px-5 py-2 rounded-lg text-sm font-bold transition-all text-slate-600 hover:text-slate-900">
+                        <i class="fa-solid fa-sliders mr-1.5"></i>2. Suno 노래 요소 탐색
+                    </button>
+                </nav>
+
+                <!-- 사용자 정보 및 로그아웃 -->
+                <div class="flex items-center gap-3">
+                    <span class="text-xs sm:text-sm font-medium text-slate-600 bg-slate-100 px-3 py-1.5 rounded-full">
+                        <i class="fa-solid fa-circle-user text-indigo-500 mr-1"></i>
+                        <span id="displayNickname">학생</span>
+                    </span>
+                    <button onclick="logout()" class="text-xs text-slate-400 hover:text-rose-500 transition-colors" title="나가기">
+                        <i class="fa-solid fa-right-from-bracket text-base"></i>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- 안내 배너 (수업 의도 + 복붙 금지 안내) -->
+        <div class="bg-amber-50 border-b border-amber-200 px-4 py-2.5 text-center text-xs sm:text-sm text-amber-900">
+            <i class="fa-solid fa-lightbulb mr-1.5 text-amber-600"></i>
+            <strong>오늘의 미션:</strong> 시에는 하나의 정답이 없습니다! 복사/붙여넣기 없이 <strong>나만의 느낌과 경험</strong>을 직접 입력해 나만의 노래 프롬프트를 완성해 봅시다.
+        </div>
+
+        <!-- 컨텐츠 영역 -->
+        <main class="flex-grow max-w-6xl w-full mx-auto px-4 sm:px-6 py-8">
+            
+            <!-- ==================== TAB 1: 시와 느낌 명확하게 적기 ==================== -->
+            <section id="tab1Content" class="fade-in space-y-6">
+                <div class="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-slate-200">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-5 mb-6">
+                        <div>
+                            <span class="text-xs font-bold uppercase tracking-wider text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-md">STEP 1 · 시에 대한 편견 깨기</span>
+                            <h2 class="text-xl sm:text-2xl font-bold text-slate-800 mt-2">나만의 시적 느낌을 가사 프롬프트로 구체화하기</h2>
+                            <p class="text-sm text-slate-500 mt-1">같은 시 구절이라도 내가 떠올린 경험과 감정에 따라 전혀 다른 노래가 탄생합니다.</p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs text-slate-500">프롬프트 완성도:</span>
+                            <div class="w-32 bg-slate-200 rounded-full h-2.5 overflow-hidden">
+                                <div id="progressBar" class="bg-indigo-600 h-2.5 rounded-full transition-all duration-500" style="width: 0%"></div>
+                            </div>
+                            <span id="progressText" class="text-xs font-bold text-indigo-600">0%</span>
+                        </div>
+                    </div>
+
+                    <!-- 수업 활동 선택: 제시 시 구절 선택 vs 내 경험 직접 쓰기 -->
+                    <div class="mb-6 bg-indigo-50/60 border border-indigo-100 rounded-2xl p-4 sm:p-5">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
+                            <span class="text-sm font-bold text-indigo-950">
+                                <i class="fa-solid fa-book-open-reader text-indigo-600 mr-1.5"></i>활동 방식 선택 (선생님 안내에 따라 선택하세요)
+                            </span>
+                            <div class="flex gap-2">
+                                <button type="button" id="modePoemBtn" onclick="setActivityMode('poem')" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-indigo-600 text-white shadow-sm transition-all">
+                                    제시된 시 구절로 해석하기
+                                </button>
+                                <button type="button" id="modeExpBtn" onclick="setActivityMode('exp')" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 transition-all">
+                                    나의 경험으로 직접 쓰기
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- 제시된 시 구절 선택 카드 (지도안 연계) -->
+                        <div id="poemChoiceArea" class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
+                            <div onclick="selectPoemOption(1)" id="poemCard1" class="cursor-pointer p-4 rounded-xl bg-white border-2 border-indigo-500 shadow-sm transition-all">
+                                <div class="flex justify-between items-center mb-1">
+                                    <span class="text-xs font-bold text-indigo-600">선택지 A (시 구절 1)</span>
+                                    <span id="poemBadge1" class="text-[11px] bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full font-bold">선택됨</span>
+                                </div>
+                                <p class="text-sm text-slate-700 font-medium leading-relaxed">
+                                    "흔들리지 않고 피는 꽃이 어디 있으랴 / 이 세상 그 어떤 아름다운 꽃들도 / 다 흔들리면서 피었나니"
+                                </p>
+                                <p class="text-xs text-slate-400 mt-1">- 도종환, 「흔들리며 피는 꽃」 중에서</p>
+                            </div>
+
+                            <div onclick="selectPoemOption(2)" id="poemCard2" class="cursor-pointer p-4 rounded-xl bg-white border border-slate-200 hover:border-indigo-300 transition-all">
+                                <div class="flex justify-between items-center mb-1">
+                                    <span class="text-xs font-bold text-purple-600">선택지 B (시 구절 2)</span>
+                                    <span id="poemBadge2" class="hidden text-[11px] bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full font-bold">선택됨</span>
+                                </div>
+                                <p class="text-sm text-slate-700 font-medium leading-relaxed">
+                                    "자세히 보아야 예쁘다 / 오래 보아야 사랑스럽다 / 너도 그렇다"
+                                </p>
+                                <p class="text-xs text-slate-400 mt-1">- 나태주, 「풀꽃」</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                        <!-- 왼쪽: 학생 입력 폼 -->
+                        <div class="lg:col-span-7 space-y-6">
+                            <!-- 1단계 입력: 경험과 장면 연결 -->
+                            <div class="bg-slate-50 p-5 rounded-2xl border border-slate-200/60">
+                                <div class="flex justify-between items-center mb-2">
+                                    <label id="labelStep1" class="font-bold text-slate-700 text-sm sm:text-base">
+                                        1. 선택한 시 구절을 보니 나의 어떤 경험(장면)이 떠오르나요?
+                                    </label>
+                                    <button type="button" onclick="toggleHint('hint1')" class="text-xs bg-indigo-100 hover:bg-indigo-200 text-indigo-700 font-semibold px-3 py-1 rounded-full transition-colors">
+                                        <i class="fa-regular fa-lightbulb mr-1"></i>힌트 보기
+                                    </button>
+                                </div>
+                                <div id="hint1" class="hidden mb-3 p-3.5 bg-white rounded-xl border border-indigo-100 text-xs text-slate-600 space-y-1.5 shadow-sm">
+                                    <p class="font-bold text-indigo-600">💡 정답은 없습니다! 나만의 구체적인 장면을 연결해 보세요.</p>
+                                    <p>• <strong>시간과 장소:</strong> 비 오는 하굣길, 시험을 망치고 혼자 걷던 저녁, 친구와 화해하던 교실 복도</p>
+                                    <p>• <strong>행동과 사물:</strong> 이어폰을 꽂고 창밖을 보던 순간, 구겨진 시험지, 작은 화분</p>
+                                    <p class="text-slate-400 italic">예시: "줄넘기 대회 연습을 하다가 계속 걸려서 포기하고 싶었던 방과 후 운동장의 노을 진 풍경"</p>
+                                </div>
+                                <textarea id="inputScene" rows="3" placeholder="내가 겪었던 구체적인 시간, 장소, 상황을 적어보세요 (최소 15자 이상)"
+                                    class="no-paste w-full p-3.5 bg-white border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"></textarea>
+                            </div>
+
+                            <!-- 2단계 입력: 감정의 색깔과 비유 -->
+                            <div class="bg-slate-50 p-5 rounded-2xl border border-slate-200/60">
+                                <div class="flex justify-between items-center mb-2">
+                                    <label class="font-bold text-slate-700 text-sm sm:text-base">
+                                        2. 그 순간의 느낌을 시적인 표현(감각/비유)으로 적는다면?
+                                    </label>
+                                    <button type="button" onclick="toggleHint('hint2')" class="text-xs bg-indigo-100 hover:bg-indigo-200 text-indigo-700 font-semibold px-3 py-1 rounded-full transition-colors">
+                                        <i class="fa-regular fa-lightbulb mr-1"></i>힌트 보기
+                                    </button>
+                                </div>
+                                <div id="hint2" class="hidden mb-3 p-3.5 bg-white rounded-xl border border-indigo-100 text-xs text-slate-600 space-y-1.5 shadow-sm">
+                                    <p class="font-bold text-indigo-600">💡 '슬프다', '힘들다' 대신 색깔, 날씨, 소리에 빗대어 보세요!</p>
+                                    <p>• <strong>감각적 표현:</strong> 차가운 새벽 공기, 톡톡 튀는 탄산수, 젖은 솜처럼 무거운 발걸음</p>
+                                    <p>• <strong>비유하기:</strong> 그때 내 마음은 마치 [ ________ ] 같았다.</p>
+                                    <p class="text-slate-400 italic">예시: "바람이 불 때마다 꺾일 것 같았지만, 사실은 뿌리를 더 단단히 내리는 작은 나무 같았어."</p>
+                                </div>
+                                <textarea id="inputEmotion" rows="3" placeholder="감정을 날씨, 색깔, 소리, 혹은 사물에 비유하여 표현해 보세요 (최소 15자 이상)"
+                                    class="no-paste w-full p-3.5 bg-white border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"></textarea>
+                            </div>
+
+                            <!-- 3단계 입력: 핵심 메시지 및 가사 톤 -->
+                            <div class="bg-slate-50 p-5 rounded-2xl border border-slate-200/60">
+                                <div class="flex justify-between items-center mb-2">
+                                    <label class="font-bold text-slate-700 text-sm sm:text-base">
+                                        3. 완성될 노래의 후렴구(핵심 메시지)에 담고 싶은 말은?
+                                    </label>
+                                    <button type="button" onclick="toggleHint('hint3')" class="text-xs bg-indigo-100 hover:bg-indigo-200 text-indigo-700 font-semibold px-3 py-1 rounded-full transition-colors">
+                                        <i class="fa-regular fa-lightbulb mr-1"></i>힌트 보기
+                                    </button>
+                                </div>
+                                <div id="hint3" class="hidden mb-3 p-3.5 bg-white rounded-xl border border-indigo-100 text-xs text-slate-600 space-y-1.5 shadow-sm">
+                                    <p class="font-bold text-indigo-600">💡 같은 시라도 내가 정한 주제에 따라 전혀 다른 노래가 됩니다!</p>
+                                    <p>• 나 자신에게 건네는 따뜻한 위로, 친구에게 보내는 응원, 당당한 다짐 등</p>
+                                    <p class="text-slate-400 italic">예시: "조금 흔들려도 괜찮아, 지금 이 바람이 나를 더 멋진 꽃으로 피워낼 테니까."</p>
+                                </div>
+                                <textarea id="inputMessage" rows="2" placeholder="노래의 중심이 될 핵심 메시지나 후렴구 느낌을 적어보세요 (최소 10자 이상)"
+                                    class="no-paste w-full p-3.5 bg-white border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"></textarea>
+                            </div>
+
+                            <button type="button" onclick="evaluatePrompt()" class="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-md transition-all flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-wand-magic-sparkles"></i> 나의 시적 프롬프트 점검 및 완성하기
+                            </button>
+                        </div>
+
+                        <!-- 오른쪽: 실시간 피드백 및 다음 단계 안내 패널 -->
+                        <div class="lg:col-span-5 flex flex-col justify-between">
+                            <div class="bg-gradient-to-b from-indigo-50/80 to-purple-50/80 rounded-2xl p-6 border border-indigo-100 h-full flex flex-col">
+                                <h3 class="font-bold text-indigo-950 flex items-center gap-2 mb-4">
+                                    <i class="fa-solid fa-robot text-indigo-600"></i> 프롬프트 코칭 보드
+                                </h3>
+                                
+                                <!-- 체크리스트 상태 -->
+                                <div class="space-y-3 mb-6">
+                                    <div id="check1" class="flex items-center gap-2.5 text-sm text-slate-500 bg-white/80 p-3 rounded-xl border border-slate-200/60">
+                                        <i class="fa-regular fa-circle text-slate-400"></i>
+                                        <span>구체적인 시간/장소/경험 묘사 (15자 이상)</span>
+                                    </div>
+                                    <div id="check2" class="flex items-center gap-2.5 text-sm text-slate-500 bg-white/80 p-3 rounded-xl border border-slate-200/60">
+                                        <i class="fa-regular fa-circle text-slate-400"></i>
+                                        <span>감각적 표현 및 비유적 느낌 (15자 이상)</span>
+                                    </div>
+                                    <div id="check3" class="flex items-center gap-2.5 text-sm text-slate-500 bg-white/80 p-3 rounded-xl border border-slate-200/60">
+                                        <i class="fa-regular fa-circle text-slate-400"></i>
+                                        <span>노래의 핵심 메시지 명확화 (10자 이상)</span>
+                                    </div>
+                                </div>
+
+                                <!-- 조합된 프롬프트 미리보기 -->
+                                <div class="flex-grow flex flex-col">
+                                    <label class="text-xs font-bold text-indigo-900 mb-1.5">✨ 내가 설계한 가사 생성용 프롬프트 초안:</label>
+                                    <div id="promptPreviewBox" class="flex-grow bg-white rounded-xl p-4 border border-indigo-200 text-sm text-slate-700 leading-relaxed min-h-[140px]">
+                                        <span class="text-slate-400 italic">왼쪽의 3가지 항목을 작성하고 점검 버튼을 누르면, 나만의 시적 프롬프트가 완성됩니다.</span>
+                                    </div>
+                                </div>
+
+                                <!-- 프롬프트 완성 시 나타나는 다음 단계 안내 박스 -->
+                                <div id="nextStepGuide" class="hidden mt-5 p-4 bg-emerald-600 text-white rounded-xl shadow-lg fade-in">
+                                    <div class="flex items-start gap-3">
+                                        <i class="fa-solid fa-circle-check text-xl mt-0.5"></i>
+                                        <div>
+                                            <h4 class="font-bold text-sm">훌륭합니다! 시적 프롬프트가 완성되었습니다!</h4>
+                                            <p class="text-xs text-emerald-100 mt-1 leading-relaxed">
+                                                이제 이 시에 어울리는 옷(멜로디와 악기)을 입혀줄 차례입니다. 상단의 <strong>[2. Suno 음악 요소 탐색]</strong> 탭으로 이동하여 음악 스타일을 설계해 보세요!
+                                            </p>
+                                            <button onclick="switchTab('tab2')" class="mt-3 px-4 py-2 bg-white text-emerald-700 font-bold text-xs rounded-lg hover:bg-emerald-50 transition-colors">
+                                                2단계: 음악 요소 선택하러 가기 <i class="fa-solid fa-arrow-right ml-1"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ==================== TAB 2: Suno에 넣을 다양한 노래 요소들 ==================== -->
+            <section id="tab2Content" class="hidden fade-in space-y-6">
+                <div class="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-slate-200">
+                    <div class="border-b border-slate-100 pb-5 mb-6">
+                        <span class="text-xs font-bold uppercase tracking-wider text-purple-600 bg-purple-50 px-2.5 py-1 rounded-md">STEP 2</span>
+                        <h2 class="text-xl sm:text-2xl font-bold text-slate-800 mt-2">Suno AI 음악 요소 백과 & 스타일 조합기</h2>
+                        <p class="text-sm text-slate-500 mt-1">내가 쓴 시의 분위기에 맞는 장르, 악기, 보컬, 템포를 클릭해 보세요. Suno의 'Style of Music' 칸에 활용할 수 있는 음악적 개념을 익힐 수 있습니다.</p>
+                    </div>
+
+                    <!-- 카테고리별 선택 영역 -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                        
+                        <!-- 1. 음악 장르 (Genre) -->
+                        <div class="bg-slate-50 p-5 rounded-2xl border border-slate-200/70">
+                            <h3 class="font-bold text-slate-800 mb-1 flex items-center gap-2">
+                                <i class="fa-solid fa-compact-disc text-indigo-600"></i> 1. 음악 장르 (Genre)
+                            </h3>
+                            <p class="text-xs text-slate-500 mb-3">곡의 전체적인 뼈대와 리듬을 결정합니다.</p>
+                            <div class="flex flex-wrap gap-2" id="group-genre">
+                                <!-- JS로 버튼 렌더링 -->
+                            </div>
+                        </div>
+
+                        <!-- 2. 분위기 및 감정 (Mood / Atmosphere) -->
+                        <div class="bg-slate-50 p-5 rounded-2xl border border-slate-200/70">
+                            <h3 class="font-bold text-slate-800 mb-1 flex items-center gap-2">
+                                <i class="fa-solid fa-cloud-sun text-amber-500"></i> 2. 분위기 (Mood)
+                            </h3>
+                            <p class="text-xs text-slate-500 mb-3">1탭에서 정한 시의 감정선과 일치하는 분위기를 고르세요.</p>
+                            <div class="flex flex-wrap gap-2" id="group-mood">
+                            </div>
+                        </div>
+
+                        <!-- 3. 주요 악기 구성 (Instruments) -->
+                        <div class="bg-slate-50 p-5 rounded-2xl border border-slate-200/70">
+                            <h3 class="font-bold text-slate-800 mb-1 flex items-center gap-2">
+                                <i class="fa-solid fa-guitar text-emerald-600"></i> 3. 핵심 악기 (Instruments)
+                            </h3>
+                            <p class="text-xs text-slate-500 mb-3">어떤 악기 소리가 중심이 되면 좋을지 선택해 보세요.</p>
+                            <div class="flex flex-wrap gap-2" id="group-instrument">
+                            </div>
+                        </div>
+
+                        <!-- 4. 보컬 스타일 및 템포 (Vocal & Tempo) -->
+                        <div class="bg-slate-50 p-5 rounded-2xl border border-slate-200/70">
+                            <h3 class="font-bold text-slate-800 mb-1 flex items-center gap-2">
+                                <i class="fa-solid fa-microphone-lines text-rose-500"></i> 4. 보컬 & 템포 (Vocal & Tempo)
+                            </h3>
+                            <p class="text-xs text-slate-500 mb-3">노래를 부르는 사람의 목소리 톤과 빠르기를 정합니다.</p>
+                            <div class="flex flex-wrap gap-2" id="group-vocal">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Suno 구조 태그(Metatags) 학습 카드 -->
+                    <div class="bg-indigo-50/70 rounded-2xl p-6 border border-indigo-100 mb-8">
+                        <h3 class="font-bold text-indigo-950 mb-2 flex items-center gap-2">
+                            <i class="fa-solid fa-tags text-indigo-600"></i> 보너스 지식: Suno 가사 구조 태그 (Metatags)
+                        </h3>
+                        <p class="text-xs text-indigo-800 mb-4">가사를 쓸 때 대괄호 <code>[ ]</code> 안에 아래 단어를 넣으면 AI가 곡의 구조를 이해하고 연주합니다.</p>
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                            <div class="bg-white p-3 rounded-xl border border-indigo-100">
+                                <span class="font-bold text-indigo-600 block mb-1">[Verse] (절)</span>
+                                <span class="text-slate-600">이야기를 차분하게 시작하며 상황을 설명하는 부분</span>
+                            </div>
+                            <div class="bg-white p-3 rounded-xl border border-indigo-100">
+                                <span class="font-bold text-purple-600 block mb-1">[Chorus] (후렴)</span>
+                                <span class="text-slate-600">감정이 폭발하며 가장 기억에 남는 핵심 멜로디 부분</span>
+                            </div>
+                            <div class="bg-white p-3 rounded-xl border border-indigo-100">
+                                <span class="font-bold text-amber-600 block mb-1">[Bridge] (브릿지)</span>
+                                <span class="text-slate-600">곡의 후반부에 분위기를 반전시켜 여운을 주는 연결구</span>
+                            </div>
+                            <div class="bg-white p-3 rounded-xl border border-indigo-100">
+                                <span class="font-bold text-emerald-600 block mb-1">[Instrumental]</span>
+                                <span class="text-slate-600">목소리 없이 악기 연주만 흐르는 간주 구간</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 결과 조합 및 학생 직접 기록 영역 (복붙 방지를 위해 직접 타이핑 유도) -->
+                    <div class="bg-slate-900 text-white rounded-2xl p-6 sm:p-8 shadow-xl">
+                        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+                            <div>
+                                <h3 class="text-lg font-bold text-indigo-300">🎧 내가 선택한 Suno 스타일 프롬프트 조합</h3>
+                                <p class="text-xs text-slate-400 mt-1">위에서 태그를 클릭하면 아래에 영어 키워드가 조합됩니다. 의미를 확인하고 노트에 직접 옮겨 적어보세요!</p>
+                            </div>
+                            <button onclick="resetTags()" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-2 rounded-lg border border-slate-700 self-start">
+                                <i class="fa-solid fa-rotate-left mr-1"></i>선택 초기화
+                            </button>
+                        </div>
+
+                        <!-- 선택된 태그 표시 영역 -->
+                        <div id="selectedStyleOutput" class="bg-slate-800/90 border border-slate-700 rounded-xl p-4 font-mono text-sm text-emerald-400 min-h-[60px] flex items-center">
+                            위에서 원하는 음악 요소 버튼들을 클릭해 보세요...
+                        </div>
+
+                        <!-- 선택된 요소들의 한국어 해설 -->
+                        <div id="selectedStyleExplanation" class="mt-4 text-xs text-slate-300 space-y-1.5 bg-slate-800/50 p-4 rounded-xl">
+                            <p class="text-slate-400">선택한 음악 요소에 대한 설명이 이곳에 나타납니다.</p>
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        // ==================== 전역 상태 및 데이터 ====================
+        let currentUser = null;
+        let selectedTags = new Set();
+        let activityMode = 'poem'; // 'poem' (제시 시 구절 선택) 또는 'exp' (내 경험 직접 쓰기)
+        let selectedPoem = 1;
+
+        // Suno 음악 요소 데이터베이스
+        const musicElements = {
+            genre: [
+                { en: "K-Indie", ko: "한국 인디 음악", desc: "담백하고 서정적인 밴드/어쿠스틱 사운드" },
+                { en: "Acoustic Ballad", ko: "어쿠스틱 발라드", desc: "잔잔하고 감성적인 멜로디 중심의 발라드" },
+                { en: "Lo-fi Hip Hop", ko: "로파이 힙합", desc: "빗소리나 LP 잡음이 섞인 차분하고 몽환적인 비트" },
+                { en: "Synth-Pop", ko: "신스팝", desc: "80년대 레트로 감성의 반짝이는 전자음 팝" },
+                { en: "Pop Rock", ko: "팝 록", desc: "시원한 일렉 기타와 드럼이 어우러진 청량한 록" },
+                { en: "R&B Soul", ko: "알앤비 소울", desc: "부드럽고 그루브한 리듬과 감미로운 화음" },
+                { en: "Orchestral", ko: "오케스트라", desc: "웅장하고 영화 음악 같은 현악기 중심의 편곡" },
+                { en: "Bossa Nova", ko: "보사노바", desc: "카페에 앉아있는 듯한 나른하고 따뜻한 브라질풍 리듬" }
+            ],
+            mood: [
+                { en: "Sentimental", ko: "감성적인/애틋한", desc: "추억을 회상하듯 마음이 몽글몽글해지는 느낌" },
+                { en: "Hopeful", ko: "희망찬", desc: "미래를 향해 나아가는 밝고 긍정적인 에너지" },
+                { en: "Melancholic", ko: "우울한/쓸쓸한", desc: "비 오는 날 창밖을 보는 듯한 차분한 슬픔" },
+                { en: "Dreamy", ko: "몽환적인", desc: "꿈속을 걷는 듯 신비롭고 아련한 공간감" },
+                { en: "Nostalgic", ko: "향수를 불러일으키는", desc: "어린 시절이나 지난 학창 시절이 떠오르는 그리움" },
+                { en: "Energetic", ko: "활기찬", desc: "심장이 뛰고 달리고 싶어지는 역동적인 분위기" }
+            ],
+            instrument: [
+                { en: "Warm Piano", ko: "따뜻한 피아노", desc: "진심을 전하는 서정적인 피아노 선율" },
+                { en: "Acoustic Guitar", ko: "통기타", desc: "손끝의 울림이 느껴지는 포근한 기타 연주" },
+                { en: "Cello & Strings", ko: "첼로와 현악기", desc: "깊고 풍부한 감정의 울림을 더하는 현악 앙상블" },
+                { en: "Electric Guitar", ko: "일렉 기타", desc: "청춘의 열정이나 강렬한 감정을 표현하는 기타" },
+                { en: "Soft Synth Pad", ko: "부드러운 신디사이저", desc: "배경을 넓고 포근하게 감싸주는 전자 건반음" },
+                { en: "Music Box", ko: "오르골", desc: "순수하고 동화 같은 느낌을 주는 맑은 금속음" }
+            ],
+            vocal: [
+                { en: "Soft Female Vocal", ko: "부드러운 여성 보컬", desc: "속삭이듯 섬세하게 감정을 전달하는 여성 목소리" },
+                { en: "Emotional Male Vocal", ko: "호소력 짙은 남성 보컬", desc: "진정성 있고 따뜻한 울림을 주는 남성 목소리" },
+                { en: "Whispery", ko: "속삭이는 창법", desc: "귓가에 대고 이야기하듯 친밀한 창법" },
+                { en: "Slow Tempo", ko: "느린 템포", desc: "가사의 한 글자 한 글자를 음미할 수 있는 여유로운 속도" },
+                { en: "Mid-Tempo", ko: "중간 템포", desc: "걷는 속도와 비슷해 가장 편안하게 듣기 좋은 속도" },
+                { en: "Upbeat", ko: "빠르고 경쾌한 템포", desc: "리듬을 타며 기분 좋게 들을 수 있는 빠른 속도" }
+            ]
+        };
+
+        // ==================== 복붙(Copy & Paste) 완벽 차단 로직 ====================
+        function blockCopyPaste() {
+            document.addEventListener('contextmenu', event => {
+                event.preventDefault();
+                showModal('복사/붙여넣기 제한', '스스로의 생각과 표현력을 기르기 위해 마우스 오른쪽 버튼 메뉴는 사용할 수 없습니다.', 'warning');
+            });
+
+            document.addEventListener('keydown', event => {
+                if ((event.ctrlKey || event.metaKey) && ['c', 'v', 'x', 'a'].includes(event.key.toLowerCase())) {
+                    event.preventDefault();
+                    showModal('단축키 제한 안내', '복사(Ctrl+C) 및 붙여넣기(Ctrl+V) 기능은 학습 목표 달성을 위해 제한되어 있습니다. 직접 키보드로 입력해 주세요!', 'warning');
+                }
+            });
+
+            ['paste', 'copy', 'cut', 'drop'].forEach(evt => {
+                document.addEventListener(evt, e => {
+                    e.preventDefault();
+                    showModal('직접 입력 권장', '붙여넣기 대신 자신의 언어로 한 글자씩 직접 작성해 봅시다!', 'warning');
+                });
+            });
+        }
+
+        // ==================== 커스텀 모달 제어 ====================
+        function showModal(title, message, type = 'info') {
+            const modal = document.getElementById('customModal');
+            const modalTitle = document.getElementById('modalTitle');
+            const modalMessage = document.getElementById('modalMessage');
+            const modalIcon = document.getElementById('modalIcon');
+
+            modalTitle.textContent = title;
+            modalMessage.textContent = message;
+
+            if (type === 'warning') {
+                modalIcon.className = 'w-10 h-10 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center text-xl';
+                modalIcon.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i>';
+            } else if (type === 'success') {
+                modalIcon.className = 'w-10 h-10 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-xl';
+                modalIcon.innerHTML = '<i class="fa-solid fa-check"></i>';
+            } else {
+                modalIcon.className = 'w-10 h-10 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-xl';
+                modalIcon.innerHTML = '<i class="fa-solid fa-bell"></i>';
+            }
+
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('customModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        // ==================== 로그인 및 작업실 데이터 저장 (LocalStorage) ====================
+        function handleLogin(e) {
+            if (e) e.preventDefault();
+            const nickname = document.getElementById('nicknameInput').value.trim();
+            const password = document.getElementById('passwordInput').value.trim();
+
+            if (!nickname || password.length < 4) {
+                showModal('입력 확인', '닉네임을 입력하고, 비밀번호는 4자리 이상으로 설정해 주세요.', 'warning');
+                return;
+            }
+
+            const storageKey = `poetic_studio_user_${nickname}`;
+            let savedData = null;
+            try {
+                savedData = localStorage.getItem(storageKey);
+            } catch (err) {
+                console.warn('LocalStorage 접근 제한 환경:', err);
+            }
+
+            if (savedData) {
+                const parsed = JSON.parse(savedData);
+                if (parsed.password !== password) {
+                    showModal('비밀번호 불일치', '이미 등록된 닉네임입니다. 처음 설정한 비밀번호를 정확히 입력해 주세요.', 'warning');
+                    return;
+                }
+                currentUser = parsed;
+                loadUserData();
+                showModal('환영합니다!', `${nickname}님의 기존 작업실 데이터를 불러왔습니다.`, 'success');
+            } else {
+                currentUser = {
+                    nickname: nickname,
+                    password: password,
+                    activityMode: 'poem',
+                    selectedPoem: 1,
+                    scene: '',
+                    emotion: '',
+                    message: '',
+                    tags: []
+                };
+                saveUserData();
+                showModal('작업실 생성 완료', `${nickname}님만의 시와 음악 작업실이 만들어졌습니다!`, 'success');
+            }
+
+            document.getElementById('displayNickname').textContent = nickname;
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('mainApp').classList.remove('hidden');
+            document.getElementById('mainApp').classList.add('flex');
+        }
+
+        function saveUserData() {
+            if (!currentUser) return;
+            currentUser.activityMode = activityMode;
+            currentUser.selectedPoem = selectedPoem;
+            currentUser.scene = document.getElementById('inputScene').value;
+            currentUser.emotion = document.getElementById('inputEmotion').value;
+            currentUser.message = document.getElementById('inputMessage').value;
+            currentUser.tags = Array.from(selectedTags);
+            try {
+                localStorage.setItem(`poetic_studio_user_${currentUser.nickname}`, JSON.stringify(currentUser));
+            } catch (err) {
+                console.warn('저장 실패:', err);
+            }
+        }
+
+        function loadUserData() {
+            if (!currentUser) return;
+            if (currentUser.activityMode) setActivityMode(currentUser.activityMode, true);
+            if (currentUser.selectedPoem) selectPoemOption(currentUser.selectedPoem, true);
+            document.getElementById('inputScene').value = currentUser.scene || '';
+            document.getElementById('inputEmotion').value = currentUser.emotion || '';
+            document.getElementById('inputMessage').value = currentUser.message || '';
+            selectedTags = new Set(currentUser.tags || []);
+            renderMusicTags();
+            updateStyleOutput();
+            if (currentUser.scene || currentUser.emotion || currentUser.message) {
+                evaluatePrompt(true);
+            }
+        }
+
+        function logout() {
+            saveUserData();
+            currentUser = null;
+            document.getElementById('passwordInput').value = '';
+            document.getElementById('mainApp').classList.add('hidden');
+            document.getElementById('mainApp').classList.remove('flex');
+            document.getElementById('loginScreen').classList.remove('hidden');
+        }
+
+        // ==================== 탭 전환 기능 ====================
+        function switchTab(tabId) {
+            const tab1 = document.getElementById('tab1Content');
+            const tab2 = document.getElementById('tab2Content');
+            const btn1 = document.getElementById('btnTab1');
+            const btn2 = document.getElementById('btnTab2');
+
+            if (tabId === 'tab1') {
+                tab1.classList.remove('hidden');
+                tab2.classList.add('hidden');
+                btn1.className = "px-3 sm:px-5 py-2 rounded-lg text-sm font-bold transition-all bg-white text-indigo-600 shadow-sm";
+                btn2.className = "px-3 sm:px-5 py-2 rounded-lg text-sm font-bold transition-all text-slate-600 hover:text-slate-900";
+            } else {
+                tab1.classList.add('hidden');
+                tab2.classList.remove('hidden');
+                btn2.className = "px-3 sm:px-5 py-2 rounded-lg text-sm font-bold transition-all bg-white text-purple-600 shadow-sm";
+                btn1.className = "px-3 sm:px-5 py-2 rounded-lg text-sm font-bold transition-all text-slate-600 hover:text-slate-900";
+            }
+        }
+
+        // ==================== TAB 1: 활동 모드, 힌트 토글 및 프롬프트 검증 ====================
+        function setActivityMode(mode, skipSave = false) {
+            activityMode = mode;
+            const poemArea = document.getElementById('poemChoiceArea');
+            const poemBtn = document.getElementById('modePoemBtn');
+            const expBtn = document.getElementById('modeExpBtn');
+            const label1 = document.getElementById('labelStep1');
+
+            if (mode === 'poem') {
+                poemArea.classList.remove('hidden');
+                poemBtn.className = "px-3 py-1.5 rounded-lg text-xs font-bold bg-indigo-600 text-white shadow-sm transition-all";
+                expBtn.className = "px-3 py-1.5 rounded-lg text-xs font-bold bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 transition-all";
+                label1.textContent = "1. 선택한 시 구절을 보니 나의 어떤 경험(장면)이 떠오르나요?";
+            } else {
+                poemArea.classList.add('hidden');
+                expBtn.className = "px-3 py-1.5 rounded-lg text-xs font-bold bg-indigo-600 text-white shadow-sm transition-all";
+                poemBtn.className = "px-3 py-1.5 rounded-lg text-xs font-bold bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 transition-all";
+                label1.textContent = "1. 노래로 만들고 싶은 나만의 경험(장면)은 무엇인가요?";
+            }
+            if (!skipSave) saveUserData();
+        }
+
+        function selectPoemOption(num, skipSave = false) {
+            selectedPoem = num;
+            const c1 = document.getElementById('poemCard1');
+            const c2 = document.getElementById('poemCard2');
+            const b1 = document.getElementById('poemBadge1');
+            const b2 = document.getElementById('poemBadge2');
+
+            if (num === 1) {
+                c1.className = "cursor-pointer p-4 rounded-xl bg-white border-2 border-indigo-500 shadow-sm transition-all";
+                c2.className = "cursor-pointer p-4 rounded-xl bg-white border border-slate-200 hover:border-indigo-300 transition-all";
+                b1.classList.remove('hidden');
+                b2.classList.add('hidden');
+            } else {
+                c2.className = "cursor-pointer p-4 rounded-xl bg-white border-2 border-purple-500 shadow-sm transition-all";
+                c1.className = "cursor-pointer p-4 rounded-xl bg-white border border-slate-200 hover:border-indigo-300 transition-all";
+                b2.classList.remove('hidden');
+                b1.classList.add('hidden');
+            }
+            if (!skipSave) saveUserData();
+        }
+
+        function toggleHint(hintId) {
+            const el = document.getElementById(hintId);
+            el.classList.toggle('hidden');
+        }
+
+        function updateCheckItem(elementId, isPassed) {
+            const el = document.getElementById(elementId);
+            if (isPassed) {
+                el.className = "flex items-center gap-2.5 text-sm text-emerald-700 font-medium bg-emerald-50 p-3 rounded-xl border border-emerald-200 transition-all";
+                el.querySelector('i').className = "fa-solid fa-circle-check text-emerald-600";
+            } else {
+                el.className = "flex items-center gap-2.5 text-sm text-slate-500 bg-white/80 p-3 rounded-xl border border-slate-200/60 transition-all";
+                el.querySelector('i').className = "fa-regular fa-circle text-slate-400";
+            }
+        }
+
+        function evaluatePrompt(silent = false) {
+            const scene = document.getElementById('inputScene').value.trim();
+            const emotion = document.getElementById('inputEmotion').value.trim();
+            const message = document.getElementById('inputMessage').value.trim();
+
+            saveUserData();
+
+            const pass1 = scene.length >= 15;
+            const pass2 = emotion.length >= 15;
+            const pass3 = message.length >= 10;
+
+            updateCheckItem('check1', pass1);
+            updateCheckItem('check2', pass2);
+            updateCheckItem('check3', pass3);
+
+            let score = 0;
+            if (pass1) score += 34;
+            if (pass2) score += 33;
+            if (pass3) score += 33;
+
+            document.getElementById('progressBar').style.width = `${score}%`;
+            document.getElementById('progressText').textContent = `${score}%`;
+
+            const previewBox = document.getElementById('promptPreviewBox');
+            const nextStepGuide = document.getElementById('nextStepGuide');
+
+            if (pass1 && pass2 && pass3) {
+                const poemContext = activityMode === 'poem' 
+                    ? `<p><span class="font-bold text-amber-600">[모티브 시 구절]</span> ${selectedPoem === 1 ? '도종환 「흔들리며 피는 꽃」' : '나태주 「풀꽃」'}</p>` 
+                    : '';
+
+                previewBox.innerHTML = `
+                    <div class="space-y-2 text-slate-800">
+                        ${poemContext}
+                        <p><span class="font-bold text-indigo-600">[나만의 배경 장면]</span> ${escapeHtml(scene)}</p>
+                        <p><span class="font-bold text-purple-600">[시적 감성 & 비유]</span> ${escapeHtml(emotion)}</p>
+                        <p><span class="font-bold text-emerald-600">[핵심 메시지]</span> "${escapeHtml(message)}"</p>
+                        <hr class="my-2 border-slate-100">
+                        <p class="text-xs text-slate-500">👉 위 해석과 경험을 바탕으로 [Verse]와 [Chorus]가 나뉜 개성 있는 한국어 노래 가사를 작성해 줘.</p>
+                    </div>
+                `;
+                nextStepGuide.classList.remove('hidden');
+                if (!silent) {
+                    showModal('프롬프트 완성!', '나만의 시적 느낌과 경험이 잘 정리되었습니다. 이제 2단계 탭에서 음악적 요소를 골라보세요!', 'success');
+                }
+            } else {
+                nextStepGuide.classList.add('hidden');
+                previewBox.innerHTML = `<span class="text-amber-600 text-xs font-medium"><i class="fa-solid fa-circle-info mr-1"></i>아직 조금 더 구체적인 묘사가 필요해요! 위 체크리스트의 조건(글자 수 및 구체성)을 모두 채운 뒤 다시 점검 버튼을 눌러주세요. 막막할 땐 각 항목의 '힌트 보기'를 눌러보세요!</span>`;
+                if (!silent) {
+                    showModal('조금만 더 구체적으로 적어볼까요?', '모든 항목이 충분히 작성되어야 정확한 가사 프롬프트가 완성됩니다. 힌트를 참고해 감정을 더 자세히 표현해 보세요!', 'warning');
+                }
+            }
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // ==================== TAB 2: Suno 음악 요소 렌더링 및 선택 ====================
+        function renderMusicTags() {
+            Object.keys(musicElements).forEach(category => {
+                const container = document.getElementById(`group-${category}`);
+                container.innerHTML = '';
+
+                musicElements[category].forEach(item => {
+                    const isSelected = selectedTags.has(item.en);
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.onclick = () => toggleMusicTag(item.en);
+                    
+                    btn.className = isSelected 
+                        ? "px-3 py-2 rounded-xl text-xs font-bold bg-indigo-600 text-white shadow-md transform scale-[1.02] transition-all flex items-center gap-1.5"
+                        : "px-3 py-2 rounded-xl text-xs font-medium bg-white text-slate-700 border border-slate-200 hover:border-indigo-400 hover:bg-indigo-50/50 transition-all flex items-center gap-1.5";
+
+                    btn.innerHTML = `
+                        <span>${item.ko}</span>
+                        <span class="opacity-75 font-mono text-[11px]">(${item.en})</span>
+                    `;
+                    container.appendChild(btn);
+                });
+            });
+        }
+
+        function toggleMusicTag(enTag) {
+            if (selectedTags.has(enTag)) {
+                selectedTags.delete(enTag);
+            } else {
+                selectedTags.add(enTag);
+            }
+            saveUserData();
+            renderMusicTags();
+            updateStyleOutput();
+        }
+
+        function resetTags() {
+            selectedTags.clear();
+            saveUserData();
+            renderMusicTags();
+            updateStyleOutput();
+        }
+
+        function updateStyleOutput() {
+            const outputBox = document.getElementById('selectedStyleOutput');
+            const expBox = document.getElementById('selectedStyleExplanation');
+
+            if (selectedTags.size === 0) {
+                outputBox.innerHTML = '<span class="text-slate-500">위에서 원하는 음악 요소 버튼들을 클릭해 보세요...</span>';
+                expBox.innerHTML = '<p class="text-slate-400">선택한 음악 요소에 대한 설명이 이곳에 나타납니다.</p>';
+                return;
+            }
+
+            const tagArray = Array.from(selectedTags);
+            outputBox.textContent = tagArray.join(', ');
+
+            const allItems = [
+                ...musicElements.genre,
+                ...musicElements.mood,
+                ...musicElements.instrument,
+                ...musicElements.vocal
+            ];
+
+            let expHtml = '<p class="font-bold text-indigo-300 mb-2">📖 내가 고른 음악 요소 해설:</p>';
+            tagArray.forEach(en => {
+                const found = allItems.find(i => i.en === en);
+                if (found) {
+                    expHtml += `<p>• <strong class="text-white">${found.ko} (${found.en}):</strong> ${found.desc}</p>`;
+                }
+            });
+            expBox.innerHTML = expHtml;
+        }
+
+        // ==================== 초기화 실행 ====================
+        window.onload = function() {
+            document.getElementById('loginForm').addEventListener('submit', handleLogin);
+            blockCopyPaste();
+            renderMusicTags();
+
+            ['inputScene', 'inputEmotion', 'inputMessage'].forEach(id => {
+                document.getElementById(id).addEventListener('input', () => {
+                    saveUserData();
+                });
+            });
+        };
+    </script>
+</body>
+</html>
