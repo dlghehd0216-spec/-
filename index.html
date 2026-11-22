@@ -73,23 +73,34 @@
                 </div>
                 <span class="inline-block text-xs font-bold text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full mb-2">국어 · 성찰하며 성장하며</span>
                 <h1 class="text-2xl font-bold text-slate-800">시(詩), 노래가 되다</h1>
-                <p class="text-sm text-slate-500 mt-2">시에 정해진 정답은 없어요! 나만의 해석과 느낌으로 노래를 만들어요</p>
+                <p class="text-sm text-slate-500 mt-2">입력한 이름과 학번은 화면에 노출되지 않으며 본인 확인용으로만 안전하게 저장됩니다.</p>
             </div>
 
-            <form id="loginForm" class="space-y-5">
+            <form id="loginForm" class="space-y-4">
                 <div>
-                    <label class="block text-sm font-semibold text-slate-700 mb-1.5">학생 닉네임 (학번/이름 등)</label>
+                    <label class="block text-sm font-semibold text-slate-700 mb-1">이름</label>
                     <div class="relative">
                         <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400">
-                            <i class="fa-solid fa-user"></i>
+                            <i class="fa-solid fa-user-shield"></i>
                         </span>
-                        <input type="text" id="nicknameInput" required placeholder="예: 2학년3반_김민수" 
+                        <input type="text" id="nameInput" required autocomplete="off" placeholder="실명 입력 (화면 비노출)" 
                             class="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all">
                     </div>
                 </div>
 
                 <div>
-                    <label class="block text-sm font-semibold text-slate-700 mb-1.5">나만의 작업실 비밀번호</label>
+                    <label class="block text-sm font-semibold text-slate-700 mb-1">학번</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400">
+                            <i class="fa-solid fa-id-card"></i>
+                        </span>
+                        <input type="text" id="studentIdInput" required autocomplete="off" placeholder="예: 20305 (화면 비노출)" 
+                            class="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-1">나만의 작업실 비밀번호</label>
                     <div class="relative">
                         <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400">
                             <i class="fa-solid fa-lock"></i>
@@ -97,11 +108,11 @@
                         <input type="password" id="passwordInput" required placeholder="4자리 이상 입력 (재접속 시 동일 입력)" 
                             class="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all">
                     </div>
-                    <p class="text-xs text-slate-400 mt-1.5">* 처음 입력하는 닉네임은 새 작업실이 생성되며, 기존 닉네임은 설정한 비밀번호로 이어서 작업할 수 있습니다.</p>
+                    <p class="text-xs text-slate-400 mt-1.5">* 개인정보 보호를 위해 입장 후 화면에는 이름과 학번이 표시되지 않습니다.</p>
                 </div>
 
-                <button type="submit" class="w-full py-3.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold rounded-xl shadow-md hover:shadow-lg transition-all transform active:scale-[0.98]">
-                    작업실 입장하기 <i class="fa-solid fa-arrow-right ml-1"></i>
+                <button type="submit" id="loginSubmitBtn" class="w-full py-3.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold rounded-xl shadow-md hover:shadow-lg transition-all transform active:scale-[0.98]">
+                    신원 확인 및 작업실 입장 <i class="fa-solid fa-arrow-right ml-1"></i>
                 </button>
             </form>
         </div>
@@ -129,11 +140,14 @@
                     </button>
                 </nav>
 
-                <!-- 사용자 정보 및 로그아웃 -->
+                <!-- 개인정보 비노출 상태 표시 및 로그아웃 -->
                 <div class="flex items-center gap-3">
-                    <span class="text-xs sm:text-sm font-medium text-slate-600 bg-slate-100 px-3 py-1.5 rounded-full">
-                        <i class="fa-solid fa-circle-user text-indigo-500 mr-1"></i>
-                        <span id="displayNickname">학생</span>
+                    <span id="dbSyncBadge" class="hidden sm:inline-flex items-center text-[11px] font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full">
+                        <i class="fa-solid fa-cloud-arrow-up mr-1"></i>저장됨
+                    </span>
+                    <span class="text-xs sm:text-sm font-medium text-slate-600 bg-slate-100 px-3 py-1.5 rounded-full" title="개인정보 보호를 위해 이름과 학번은 화면에 표시되지 않습니다">
+                        <i class="fa-solid fa-shield-halved text-indigo-500 mr-1"></i>
+                        <span>창작자 인증됨</span>
                     </span>
                     <button onclick="logout()" class="text-xs text-slate-400 hover:text-rose-500 transition-colors" title="나가기">
                         <i class="fa-solid fa-right-from-bracket text-base"></i>
@@ -431,6 +445,16 @@
                         <div id="selectedStyleExplanation" class="mt-4 text-xs text-slate-300 space-y-1.5 bg-slate-800/50 p-4 rounded-xl">
                             <p class="text-slate-400">선택한 음악 요소에 대한 설명이 이곳에 나타납니다.</p>
                         </div>
+
+                        <!-- 최종 결과물 제출 완료 버튼 (스프레드시트 C열 '제출 완료' 기록) -->
+                        <div class="mt-6 pt-5 border-t border-slate-700 flex flex-col sm:flex-row items-center justify-between gap-4">
+                            <p class="text-xs text-slate-400">
+                                1단계 프롬프트와 2단계 음악 요소 선택을 모두 마쳤다면 아래 버튼을 눌러 선생님께 제출을 완료하세요.
+                            </p>
+                            <button type="button" onclick="submitFinalWork()" class="w-full sm:w-auto px-6 py-3 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold rounded-xl shadow-lg transition-all flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-paper-plane"></i> 최종 결과물 제출 완료하기
+                            </button>
+                        </div>
                     </div>
 
                 </div>
@@ -439,11 +463,18 @@
     </div>
 
     <script>
+        // ==================== 구글 스프레드시트 웹 앱 URL 설정 ====================
+        // 아래 따옴표 안에 1단계에서 배포한 구글 Apps Script 웹 앱 URL을 붙여넣으세요!
+        const GOOGLE_SCRIPT_URL = ""; 
+
         // ==================== 전역 상태 및 데이터 ====================
-        let currentUser = null;
+        let currentUser = null; // { name, studentId, password, passed, submitted } (화면에는 절대 렌더링하지 않음)
         let selectedTags = new Set();
-        let activityMode = 'poem'; // 'poem' (제시 시 구절 선택) 또는 'exp' (내 경험 직접 쓰기)
+        let activityMode = 'poem';
         let selectedPoem = 1;
+        let isPassed = false;
+        let isSubmitted = false;
+        let saveTimeout = null;
 
         // Suno 음악 요소 데이터베이스
         const musicElements = {
@@ -459,166 +490,166 @@
             ],
             mood: [
                 { en: "Sentimental", ko: "감성적인/애틋한", desc: "추억을 회상하듯 마음이 몽글몽글해지는 느낌" },
-                { en: "Hopeful", ko: "희망찬", desc: "미래를 향해 나아가는 밝고 긍정적인 에너지" },
-                { en: "Melancholic", ko: "우울한/쓸쓸한", desc: "비 오는 날 창밖을 보는 듯한 차분한 슬픔" },
-                { en: "Dreamy", ko: "몽환적인", desc: "꿈속을 걷는 듯 신비롭고 아련한 공간감" },
-                { en: "Nostalgic", ko: "향수를 불러일으키는", desc: "어린 시절이나 지난 학창 시절이 떠오르는 그리움" },
-                { en: "Energetic", ko: "활기찬", desc: "심장이 뛰고 달리고 싶어지는 역동적인 분위기" }
-            ],
-            instrument: [
-                { en: "Warm Piano", ko: "따뜻한 피아노", desc: "진심을 전하는 서정적인 피아노 선율" },
-                { en: "Acoustic Guitar", ko: "통기타", desc: "손끝의 울림이 느껴지는 포근한 기타 연주" },
-                { en: "Cello & Strings", ko: "첼로와 현악기", desc: "깊고 풍부한 감정의 울림을 더하는 현악 앙상블" },
-                { en: "Electric Guitar", ko: "일렉 기타", desc: "청춘의 열정이나 강렬한 감정을 표현하는 기타" },
-                { en: "Soft Synth Pad", ko: "부드러운 신디사이저", desc: "배경을 넓고 포근하게 감싸주는 전자 건반음" },
-                { en: "Music Box", ko: "오르골", desc: "순수하고 동화 같은 느낌을 주는 맑은 금속음" }
-            ],
-            vocal: [
-                { en: "Soft Female Vocal", ko: "부드러운 여성 보컬", desc: "속삭이듯 섬세하게 감정을 전달하는 여성 목소리" },
-                { en: "Emotional Male Vocal", ko: "호소력 짙은 남성 보컬", desc: "진정성 있고 따뜻한 울림을 주는 남성 목소리" },
-                { en: "Whispery", ko: "속삭이는 창법", desc: "귓가에 대고 이야기하듯 친밀한 창법" },
-                { en: "Slow Tempo", ko: "느린 템포", desc: "가사의 한 글자 한 글자를 음미할 수 있는 여유로운 속도" },
-                { en: "Mid-Tempo", ko: "중간 템포", desc: "걷는 속도와 비슷해 가장 편안하게 듣기 좋은 속도" },
-                { en: "Upbeat", ko: "빠르고 경쾌한 템포", desc: "리듬을 타며 기분 좋게 들을 수 있는 빠른 속도" }
-            ]
-        };
-
-        // ==================== 복붙(Copy & Paste) 완벽 차단 로직 ====================
-        function blockCopyPaste() {
-            document.addEventListener('contextmenu', event => {
-                event.preventDefault();
-                showModal('복사/붙여넣기 제한', '스스로의 생각과 표현력을 기르기 위해 마우스 오른쪽 버튼 메뉴는 사용할 수 없습니다.', 'warning');
-            });
-
-            document.addEventListener('keydown', event => {
-                if ((event.ctrlKey || event.metaKey) && ['c', 'v', 'x', 'a'].includes(event.key.toLowerCase())) {
-                    event.preventDefault();
-                    showModal('단축키 제한 안내', '복사(Ctrl+C) 및 붙여넣기(Ctrl+V) 기능은 학습 목표 달성을 위해 제한되어 있습니다. 직접 키보드로 입력해 주세요!', 'warning');
-                }
-            });
-
-            ['paste', 'copy', 'cut', 'drop'].forEach(evt => {
-                document.addEventListener(evt, e => {
-                    e.preventDefault();
-                    showModal('직접 입력 권장', '붙여넣기 대신 자신의 언어로 한 글자씩 직접 작성해 봅시다!', 'warning');
-                });
-            });
-        }
-
-        // ==================== 커스텀 모달 제어 ====================
-        function showModal(title, message, type = 'info') {
-            const modal = document.getElementById('customModal');
-            const modalTitle = document.getElementById('modalTitle');
-            const modalMessage = document.getElementById('modalMessage');
-            const modalIcon = document.getElementById('modalIcon');
-
-            modalTitle.textContent = title;
-            modalMessage.textContent = message;
-
-            if (type === 'warning') {
-                modalIcon.className = 'w-10 h-10 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center text-xl';
-                modalIcon.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i>';
-            } else if (type === 'success') {
-                modalIcon.className = 'w-10 h-10 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-xl';
-                modalIcon.innerHTML = '<i class="fa-solid fa-check"></i>';
-            } else {
-                modalIcon.className = 'w-10 h-10 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-xl';
-                modalIcon.innerHTML = '<i class="fa-solid fa-bell"></i>';
-            }
-
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-        }
-
-        function closeModal() {
-            const modal = document.getElementById('customModal');
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
-        }
-
-        // ==================== 로그인 및 작업실 데이터 저장 (LocalStorage) ====================
-        function handleLogin(e) {
+        // ==================== 로그인 및 구글 스프레드시트 DB 연동 ====================
+        async function handleLogin(e) {
             if (e) e.preventDefault();
-            const nickname = document.getElementById('nicknameInput').value.trim();
+            const name = document.getElementById('nameInput').value.trim();
+            const studentId = document.getElementById('studentIdInput').value.trim();
             const password = document.getElementById('passwordInput').value.trim();
 
-            if (!nickname || password.length < 4) {
-                showModal('입력 확인', '닉네임을 입력하고, 비밀번호는 4자리 이상으로 설정해 주세요.', 'warning');
+            if (!name || !studentId || password.length < 4) {
+                showModal('입력 확인', '이름, 학번을 모두 입력하고 비밀번호는 4자리 이상으로 설정해 주세요.', 'warning');
                 return;
             }
 
-            const storageKey = `poetic_studio_user_${nickname}`;
-            let savedData = null;
-            try {
-                savedData = localStorage.getItem(storageKey);
-            } catch (err) {
-                console.warn('LocalStorage 접근 제한 환경:', err);
-            }
+            const btn = document.getElementById('loginSubmitBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> 신원 확인 중...';
 
-            if (savedData) {
-                const parsed = JSON.parse(savedData);
-                if (parsed.password !== password) {
-                    showModal('비밀번호 불일치', '이미 등록된 닉네임입니다. 처음 설정한 비밀번호를 정확히 입력해 주세요.', 'warning');
-                    return;
+            try {
+                // 구글 스프레드시트 URL이 설정된 경우 서버와 통신
+                if (GOOGLE_SCRIPT_URL) {
+                    const response = await fetch(GOOGLE_SCRIPT_URL, {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            action: 'login',
+                            name: name,
+                            studentId: studentId,
+                            password: password
+                        })
+                    });
+                    const result = await response.json();
+
+                    if (result.status === 'wrong_password') {
+                        showModal('신원 확인 실패', '이미 등록된 학번·이름입니다. 처음 설정한 비밀번호를 정확히 입력해 주세요.', 'warning');
+                        resetLoginBtn();
+                        return;
+                    }
+
+                    currentUser = { name, studentId, password };
+
+                    if (result.status === 'existing' && result.record) {
+                        isSubmitted = result.record.submitted === '제출 완료';
+                        isPassed = result.record.passed === '통과';
+                        applyLoadedRecord(result.record);
+                        showModal('신원 확인 완료', '이전 작업 내역을 안전하게 불러왔습니다. (개인정보는 화면에 표시되지 않습니다)', 'success');
+                    } else {
+                        showModal('입장 완료', '새 작업실이 생성되었습니다. (이름과 학번은 DB에만 저장되며 화면에 노출되지 않습니다)', 'success');
+                    }
+                } else {
+                    // 구글 스프레드시트 URL 미입력 시 로컬 백업 모드 동작
+                    const fallbackKey = `poetic_db_${studentId}_${name}`;
+                    const saved = localStorage.getItem(fallbackKey);
+                    if (saved) {
+                        const parsed = JSON.parse(saved);
+                        if (parsed.password !== password) {
+                            showModal('신원 확인 실패', '처음 설정한 비밀번호와 일치하지 않습니다.', 'warning');
+                            resetLoginBtn();
+                            return;
+                        }
+                        currentUser = { name, studentId, password };
+                        isSubmitted = parsed.submitted === '제출 완료';
+                        isPassed = parsed.passed === '통과';
+                        applyLoadedRecord(parsed);
+                        showModal('신원 확인 완료', '이전 작업 내역을 불러왔습니다.', 'success');
+                    } else {
+                        currentUser = { name, studentId, password };
+                        saveUserData();
+                        showModal('입장 완료', '작업실이 생성되었습니다. (선생님께 안내받은 스프레드시트 URL을 연결하면 DB에 자동 기록됩니다)', 'success');
+                    }
                 }
-                currentUser = parsed;
-                loadUserData();
-                showModal('환영합니다!', `${nickname}님의 기존 작업실 데이터를 불러왔습니다.`, 'success');
-            } else {
-                currentUser = {
-                    nickname: nickname,
-                    password: password,
-                    activityMode: 'poem',
-                    selectedPoem: 1,
-                    scene: '',
-                    emotion: '',
-                    message: '',
-                    tags: []
-                };
-                saveUserData();
-                showModal('작업실 생성 완료', `${nickname}님만의 시와 음악 작업실이 만들어졌습니다!`, 'success');
-            }
 
-            document.getElementById('displayNickname').textContent = nickname;
-            document.getElementById('loginScreen').classList.add('hidden');
-            document.getElementById('mainApp').classList.remove('hidden');
-            document.getElementById('mainApp').classList.add('flex');
-        }
+                // 입력 필드의 개인정보 즉시 비우기 (DOM 잔존 방지)
+                document.getElementById('nameInput').value = '';
+                document.getElementById('studentIdInput').value = '';
+                document.getElementById('passwordInput').value = '';
 
-        function saveUserData() {
-            if (!currentUser) return;
-            currentUser.activityMode = activityMode;
-            currentUser.selectedPoem = selectedPoem;
-            currentUser.scene = document.getElementById('inputScene').value;
-            currentUser.emotion = document.getElementById('inputEmotion').value;
-            currentUser.message = document.getElementById('inputMessage').value;
-            currentUser.tags = Array.from(selectedTags);
-            try {
-                localStorage.setItem(`poetic_studio_user_${currentUser.nickname}`, JSON.stringify(currentUser));
+                document.getElementById('loginScreen').classList.add('hidden');
+                document.getElementById('mainApp').classList.remove('hidden');
+                document.getElementById('mainApp').classList.add('flex');
             } catch (err) {
-                console.warn('저장 실패:', err);
+                console.error(err);
+                showModal('연결 오류', '데이터베이스 서버와 통신하는 중 문제가 발생했습니다. 잠시 후 다시 시도해 주세요.', 'warning');
+            } finally {
+                resetLoginBtn();
             }
         }
 
-        function loadUserData() {
-            if (!currentUser) return;
-            if (currentUser.activityMode) setActivityMode(currentUser.activityMode, true);
-            if (currentUser.selectedPoem) selectPoemOption(currentUser.selectedPoem, true);
-            document.getElementById('inputScene').value = currentUser.scene || '';
-            document.getElementById('inputEmotion').value = currentUser.emotion || '';
-            document.getElementById('inputMessage').value = currentUser.message || '';
-            selectedTags = new Set(currentUser.tags || []);
+        function resetLoginBtn() {
+            const btn = document.getElementById('loginSubmitBtn');
+            btn.disabled = false;
+            btn.innerHTML = '신원 확인 및 작업실 입장 <i class="fa-solid fa-arrow-right ml-1"></i>';
+        }
+
+        function applyLoadedRecord(record) {
+            if (record.activityMode) setActivityMode(record.activityMode, true);
+            if (record.selectedPoem) selectPoemOption(record.selectedPoem, true);
+            document.getElementById('inputScene').value = record.scene || '';
+            document.getElementById('inputEmotion').value = record.emotion || '';
+            document.getElementById('inputMessage').value = record.message || '';
+            selectedTags = new Set(record.tags || []);
             renderMusicTags();
             updateStyleOutput();
-            if (currentUser.scene || currentUser.emotion || currentUser.message) {
+            if (record.scene || record.emotion || record.message) {
                 evaluatePrompt(true);
+            }
+        }
+
+        function scheduleSave() {
+            const badge = document.getElementById('dbSyncBadge');
+            if (badge) {
+                badge.innerHTML = '<i class="fa-solid fa-rotate fa-spin mr-1"></i>동기화 중...';
+                badge.className = 'hidden sm:inline-flex items-center text-[11px] font-medium text-amber-700 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-full';
+            }
+            clearTimeout(saveTimeout);
+            saveTimeout = setTimeout(() => {
+                saveUserData();
+            }, 800);
+        }
+
+        async function saveUserData() {
+            if (!currentUser) return;
+
+            const payload = {
+                action: 'save',
+                name: currentUser.name,
+                studentId: currentUser.studentId,
+                password: currentUser.password,
+                submitted: isSubmitted ? '제출 완료' : '작성중',
+                passed: isPassed ? '통과' : '미통과',
+                activityMode: activityMode,
+                selectedPoem: selectedPoem,
+                scene: document.getElementById('inputScene').value,
+                emotion: document.getElementById('inputEmotion').value,
+                message: document.getElementById('inputMessage').value,
+                tags: Array.from(selectedTags)
+            };
+
+            try {
+                if (GOOGLE_SCRIPT_URL) {
+                    await fetch(GOOGLE_SCRIPT_URL, {
+                        method: 'POST',
+                        body: JSON.stringify(payload)
+                    });
+                } else {
+                    localStorage.setItem(`poetic_db_${currentUser.studentId}_${currentUser.name}`, JSON.stringify(payload));
+                }
+
+                const badge = document.getElementById('dbSyncBadge');
+                if (badge) {
+                    badge.innerHTML = '<i class="fa-solid fa-cloud-arrow-up mr-1"></i>DB 저장됨';
+                    badge.className = 'hidden sm:inline-flex items-center text-[11px] font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full';
+                }
+            } catch (err) {
+                console.warn('DB 저장 오류:', err);
             }
         }
 
         function logout() {
             saveUserData();
             currentUser = null;
-            document.getElementById('passwordInput').value = '';
+            isPassed = false;
+            isSubmitted = false;
             document.getElementById('mainApp').classList.add('hidden');
             document.getElementById('mainApp').classList.remove('flex');
             document.getElementById('loginScreen').classList.remove('hidden');
@@ -708,8 +739,6 @@
             const emotion = document.getElementById('inputEmotion').value.trim();
             const message = document.getElementById('inputMessage').value.trim();
 
-            saveUserData();
-
             const pass1 = scene.length >= 15;
             const pass2 = emotion.length >= 15;
             const pass3 = message.length >= 10;
@@ -730,6 +759,8 @@
             const nextStepGuide = document.getElementById('nextStepGuide');
 
             if (pass1 && pass2 && pass3) {
+                isPassed = true;
+                saveUserData();
                 const poemContext = activityMode === 'poem' 
                     ? `<p><span class="font-bold text-amber-600">[모티브 시 구절]</span> ${selectedPoem === 1 ? '도종환 「흔들리며 피는 꽃」' : '나태주 「풀꽃」'}</p>` 
                     : '';
@@ -746,8 +777,32 @@
                 `;
                 nextStepGuide.classList.remove('hidden');
                 if (!silent) {
-                    showModal('프롬프트 완성!', '나만의 시적 느낌과 경험이 잘 정리되었습니다. 이제 2단계 탭에서 음악적 요소를 골라보세요!', 'success');
+                    showModal('프롬프트 통과 완료!', '스프레드시트에 [통과] 상태로 자동 기록되었습니다. 이제 2단계 탭에서 음악적 요소를 골라보세요!', 'success');
                 }
+            } else {
+                isPassed = false;
+                saveUserData();
+                nextStepGuide.classList.add('hidden');
+                previewBox.innerHTML = `<span class="text-amber-600 text-xs font-medium"><i class="fa-solid fa-circle-info mr-1"></i>아직 조금 더 구체적인 묘사가 필요해요! 위 체크리스트의 조건(글자 수 및 구체성)을 모두 채운 뒤 다시 점검 버튼을 눌러주세요. 막막할 땐 각 항목의 '힌트 보기'를 눌러보세요!</span>`;
+                if (!silent) {
+                    showModal('조금만 더 구체적으로 적어볼까요?', '모든 항목이 충분히 작성되어야 정확한 가사 프롬프트가 완성됩니다. 힌트를 참고해 감정을 더 자세히 표현해 보세요!', 'warning');
+                }
+            }
+        }
+
+        async function submitFinalWork() {
+            if (!isPassed) {
+                showModal('1단계 점검 필요', '먼저 [1. 시의 느낌 & 프롬프트 설계] 탭에서 프롬프트 통과를 완료해 주세요!', 'warning');
+                return;
+            }
+            if (selectedTags.size === 0) {
+                showModal('음악 요소 선택 필요', '최소 1개 이상의 Suno 음악 요소 태그를 선택해 주세요!', 'warning');
+                return;
+            }
+            isSubmitted = true;
+            await saveUserData();
+            showModal('최종 제출 완료!', '결과물 제출 여부 [제출 완료] 및 통과 여부 [통과]가 데이터베이스에 안전하게 기록되었습니다!', 'success');
+        }
             } else {
                 nextStepGuide.classList.add('hidden');
                 previewBox.innerHTML = `<span class="text-amber-600 text-xs font-medium"><i class="fa-solid fa-circle-info mr-1"></i>아직 조금 더 구체적인 묘사가 필요해요! 위 체크리스트의 조건(글자 수 및 구체성)을 모두 채운 뒤 다시 점검 버튼을 눌러주세요. 막막할 땐 각 항목의 '힌트 보기'를 눌러보세요!</span>`;
@@ -844,7 +899,7 @@
 
             ['inputScene', 'inputEmotion', 'inputMessage'].forEach(id => {
                 document.getElementById(id).addEventListener('input', () => {
-                    saveUserData();
+                    scheduleSave();
                 });
             });
         };
