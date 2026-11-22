@@ -487,7 +487,8 @@
     <script>
         // ==================== 구글 스프레드시트 웹 앱 URL 설정 ====================
         // 코드에 직접 넣거나, 웹 화면 하단 [선생님용 DB 주소 설정]에서 붙여넣어 저장할 수 있습니다.
-        let GOOGLE_SCRIPT_URL = localStorage.getItem('poetic_google_script_url') || ""; 
+        const DEFAULT_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwnkY8x3OCJscIArFLTZSGf7dtucDK85R8sB6rPyqkwxDlTXdrSDuFWE7A4IoncZUBgMQ/exec"; // 모듈 2 실습 스프레드시트
+        let GOOGLE_SCRIPT_URL = localStorage.getItem('poetic_google_script_url') || DEFAULT_SCRIPT_URL; 
 
         // ==================== 전역 상태 및 데이터 ====================
         let currentUser = null; // { name, studentId, password, passed, submitted } (화면에는 절대 렌더링하지 않음)
